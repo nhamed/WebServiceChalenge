@@ -8,15 +8,17 @@ using System.Net;
 using System.IO;
 namespace WebserviceCustomer
 {
-    public static class WebserviceHelper
+    public static class FibonacciService
     {
 
-        public static Task<string> CallFubonacciWebService(string url, string action, int param)
+        public static Task<int> CallFubonacciWebService(int param)
         {
+            var url = "https://localhost:44369/FibonacciService.asmx";
+            var action = "http://tempuri.org/calcul";
             return Task.Run(() =>
             {
                 XmlDocument soapEnvelopeXml = CreateSoapEnvelope(param);
-                HttpWebRequest webRequest = CreateWebRequest(url, url + "?op=" + action);
+                HttpWebRequest webRequest = CreateWebRequest(url, action);
 
                 InsertSoapEnvelopeIntoWebRequest(soapEnvelopeXml, webRequest);
 
@@ -28,16 +30,33 @@ namespace WebserviceCustomer
                 asyncResult.AsyncWaitHandle.WaitOne();
 
                 // get the response from the completed web request.
-                string soapResult;
-                using (WebResponse webResponse = webRequest.EndGetResponse(asyncResult))
-                {
-                    using (StreamReader rd = new StreamReader(webResponse.GetResponseStream()))
+                string soapResult = null;
+                try {
+                    using (WebResponse webResponse = webRequest.EndGetResponse(asyncResult))
                     {
-                        soapResult = rd.ReadToEnd();
+                        using (StreamReader rd = new StreamReader(webResponse.GetResponseStream()))
+                        {
+                            soapResult = rd.ReadToEnd();
+                        }
+                        Console.Write(soapResult);
                     }
-                    Console.Write(soapResult);
                 }
-                return soapResult;
+                catch (WebException ex)
+                {
+                    using (var stream = ex.Response.GetResponseStream())
+                    using (var reader = new StreamReader(stream))
+                    {
+                        var e = reader.ReadToEnd();
+                        Console.WriteLine(e);
+
+                    }
+                    throw;
+                }
+                
+                XmlDocument doc = new XmlDocument();
+                doc.LoadXml(soapResult);
+                return int.Parse(doc.DocumentElement.SelectSingleNode("/").InnerText);
+
             });
             
         }

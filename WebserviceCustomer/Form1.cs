@@ -5,6 +5,7 @@ using System.Data;
 using System.Drawing;
 using System.Linq;
 using System.Text;
+using System.Threading;
 using System.Threading.Tasks;
 using System.Windows.Forms;
 
@@ -21,15 +22,14 @@ namespace WebserviceCustomer
         {
             using (BusyForm busyForm = new BusyForm())
             {
-                var url = "https://localhost:44369/FibonacciService.asmx";
-                var result = WebserviceHelper.CallFubonacciWebService(url, "calcul", 10).ContinueWith(t =>
-                {
-                    busyForm.Close();
-                }).ConfigureAwait(false);
-                busyForm.ShowDialog();
-               
-                busyForm.Hide();
-                //MessageBox.Show(result);
+                
+                
+                busyForm.Show(this);
+
+                var result = FibonacciService.CallFubonacciWebService(10).Result;
+                Thread.Sleep(1000);
+                busyForm.Close();
+                MessageBox.Show(result.ToString());
 
             }
         }
